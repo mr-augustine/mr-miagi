@@ -34,9 +34,9 @@
 #define STEER_NEUTRAL             1500
 
 enum DriveSpeed {
-  Creep = 0,
-  Cruise,
-  Ludicrous,
+  DriveSpeed_Creep = 0,
+  DriveSpeed_Cruise,
+  DriveSpeed_Ludicrous,
 };
 
 enum DriveGear {
@@ -60,9 +60,10 @@ public:
   const uint32_t microsec_per_period = MICROSEC_PER_MILLISEC * PWM_PERIOD_MS;
 
   Mobility() : throttle_us(THROT_NEUTRAL), steering_us(STEER_NEUTRAL), current_gear(DriveGear_Neutral) {}
-  uint8_t initialize(void);
+  void initialize(void);
   void steer(uint16_t steer_pwm);
   void stop(void);
+  int8_t verify_init(void);
 };
 
 #endif

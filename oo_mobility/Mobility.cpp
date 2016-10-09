@@ -1,6 +1,6 @@
 #include "Mobility.h"
 
-uint8_t Mobility::initialize(void) {
+void Mobility::initialize(void) {
   THROTTLE_PORT = 0;
   STEERING_PORT = 0;
 
@@ -20,7 +20,7 @@ uint8_t Mobility::initialize(void) {
 
   // Clear the steering and throttle pins when the output compare register
   // matches
-  MOBILITY_TCCRB |= STEERING_COMP_MODE | THROTTLE_COMP_MODE;
+  MOBILITY_TCCRA |= (STEERING_COMP_MODE | THROTTLE_COMP_MODE);
 
   // Set the prescaler (see Table 17-6)
   MOBILITY_TCCRB |= PRESCALER_64;
@@ -32,8 +32,6 @@ uint8_t Mobility::initialize(void) {
   THROTTLE_COMPARE_REG = pwm_to_ticks(throttle_us);
 
   tnp_bypass();
-
-  return 1;
 }
 
 uint16_t Mobility::pwm_to_ticks(uint16_t pwm_us) {
@@ -104,4 +102,44 @@ void Mobility::stop(void) {
   // statevars.mobility_throttle_us = THROTTLE_COMPARE_REG;
 
   return;
+}
+
+int8_t Mobility::verify_init(void) {
+  // Verify that the steering and throttle pin directions are set
+  if ( !(THROTTLE_DDR & (1 << THROTTLE_DDR_PIN)) ||
+       !(STEERING_DDR & (1 << STEERING_DDR_PIN)) ) {
+    return 0;
+  }
+
+  // Verify that Fast PWM is set
+  if ( !(MOBILITY_TCCRA & (1 << WGM30)) ||
+       !(MOBILITY_TCCRA & (1 << WGM31)) ||
+       !(MOBILITY_TCCRB & (1 << WGM32)) ||
+       !(MOBILITY_TCCRB & (1 << WGM33)) ) {
+    return -1;
+  }
+
+  // Verify that the compare mode bits are set for the steering and throttle
+  if ( !(MOBILITY_TCCRA & STEERING_COMP_MODE) ||
+       !(MOBILITY_TCCRA & THROTTLE_COMP_MODE) ) {
+    return -2;
+  }
+
+  // Verify that the Timer prescaler is set
+  if ( !(MOBILITY_TCCRB & PRESCALER_64) ) {
+    return -3;
+  }
+
+  // Verify that the TOP value is set
+  if ( !(MOBILITY_TOP == ticks_per_period) ) {
+    return -4;
+  }
+
+  // Verify that the initial PWM pulse widths are set
+  if ( !(STEERING_COMPARE_REG == pwm_to_ticks(steering_us)) ||
+       !(THROTTLE_COMPARE_REG == pwm_to_ticks(throttle_us)) ) {
+    return -5;
+  }
+
+  return 1;
 }
