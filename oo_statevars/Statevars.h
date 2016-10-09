@@ -1,3 +1,6 @@
+#ifndef _STATEVARS_H_
+#define _STATEVARS_H_
+
 #include <stdint.h>
 
 class Statevars {
@@ -113,3 +116,5 @@ public:
   void set_suffix(uint32_t s) { suffix = s; }
 
 };
+
+#endif
